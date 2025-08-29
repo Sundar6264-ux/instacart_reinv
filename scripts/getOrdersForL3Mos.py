@@ -11,7 +11,8 @@ from openpyxl import Workbook
 # ----------------- Config -----------------
 CLOVER_API_TOKEN = os.getenv("CLOVER_API_TOKEN")
 CLOVER_MERCHANT_ID = os.getenv("CLOVER_MERCHANT_ID")
-BASE_URL = os.getenv("BASE_URL")
+BASE_URL = f"https://api.clover.com/v3/merchants/{CLOVER_MERCHANT_ID}"
+
 if not CLOVER_API_TOKEN or not CLOVER_MERCHANT_ID:
     print("❌ Missing Clover API credentials in environment variables", file=sys.stderr)
     sys.exit(1)
