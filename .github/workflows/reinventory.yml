@@ -3,7 +3,7 @@ name: Reinventory Pipeline
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: "0 13 * * *"  # 13:00 UTC ~= 9:00 America/New_York most of the year
+    - cron: "0 13 * * *"   # 13:00 UTC ≈ 09:00 America/New_York most of the year
 
 env:
   TZ: America/New_York
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -28,35 +28,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Step 1 — Fetch all Clover inventory
+      # Step 1: Fetch all Clover inventory -> clover_items.xlsx
+      - name: Fetch all Clover inventory
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
         run: |
-          python getAllInvItems.py
-        # expected output: clover_items.xlsx
+          python scripts/getAllInvItems.py
 
-      - name: Step 2 — Fetch 3 months of sales (orders)
+      # Step 2: Fetch 3 months of sales -> product_names_last_3_months.xlsx
+      - name: Fetch last 3 months of sales
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
         run: |
-          python getOrdersForL3Mos.py
-        # expected output: product_names_last_3_months.xlsx
+          python scripts/getOrdersForL3Mos.py
 
-      - name: Step 3 — Map inventory to sold items (unique products)
+      # Step 3: Map inventory to sold items -> mapped_items.xlsx
+      - name: Map inventory to sold items
         run: |
-          python mapItems.py
-        # expected output: mapped_items.xlsx
+          python scripts/mapItems.py
 
-      - name: Step 4 — Build final XLSX + dated CSV
+      # Step 4: Build final XLSX + dated CSV
+      - name: Build final outputs
         run: |
-          python final_file.py
-        # expected outputs:
-        # - processed_new_inventory_final.xlsx
-        # - <YYYYMMDD>_store_reinventory.csv
+          python scripts/final_file.py
 
-      - name: Upload outputs (artifacts)
+      # Upload everything useful
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: reinventory_outputs
