@@ -134,6 +134,6 @@ def export_product_names_last_3_months(filepath: str, unique_only: bool = True) 
 
 # ----------------- Main -----------------
 if __name__ == "__main__":
-    if not CLOVER_API_TOKEN or not MERCHANT_ID:
+    if not CLOVER_API_TOKEN or not CLOVER_MERCHANT_ID:
         raise SystemExit("Set CLOVER_API_TOKEN and CLOVER_MERCHANT_ID (env vars) or edit this file).")
     export_product_names_last_3_months("product_names_last_3_months.xlsx", unique_only=True)
