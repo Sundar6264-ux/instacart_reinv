@@ -24,7 +24,7 @@ BATCH_SIZE = 1000  # Clover max per page
 
 # ----------------- HTTP helpers -----------------
 HEADERS = {
-    "Authorization": f"Bearer {API_TOKEN}",
+    "Authorization": f"Bearer {CLOVER_API_TOKEN}",
     "Accept": "application/json",
     "Content-Type": "application/json",
 }
@@ -134,6 +134,6 @@ def export_product_names_last_3_months(filepath: str, unique_only: bool = True) 
 
 # ----------------- Main -----------------
 if __name__ == "__main__":
-    if not API_TOKEN or not MERCHANT_ID:
+    if not CLOVER_API_TOKEN or not MERCHANT_ID:
         raise SystemExit("Set CLOVER_API_TOKEN and CLOVER_MERCHANT_ID (env vars) or edit this file).")
     export_product_names_last_3_months("product_names_last_3_months.xlsx", unique_only=True)
