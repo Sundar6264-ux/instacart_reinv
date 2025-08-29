@@ -8,6 +8,11 @@ import pandas as pd
 INPUT_FILE   = "mapped_items.xlsx"
 OUTPUT_XLSX  = "processed_new_inventory_final.xlsx"   # optional xlsx (still produced)
 OVERRIDE_DATE = None  # e.g., "20250828" to force a specific date; otherwise use today
+INSTACART_SFTP_PASSWORD = os.getenv("INSTACART_SFTP_PASSWORD")
+INSTACART_SFTP_USR = os.getenv("INSTACART_SFTP_USR")
+INSTACART_SFTP_HOST = os.getenv("INSTACART_SFTP_HOST")
+
+
 # CSV name is built at the end using YYYYMMDD_store_reinventory.csv
 
 # ========= Regex helpers =========
@@ -213,6 +218,29 @@ def save_outputs(df_out: pd.DataFrame, xlsx_path: str, csv_date_override: str | 
     print(f"✅ Wrote XLSX → {xlsx_path}")
     print(f"✅ Wrote CSV  → {csv_name}")
 
+def upload_via_sftp(local_file: str):
+    import paramiko
+    host = INSTACART_SFTP_HOST
+    username = INSTACART_SFTP_USR_
+    password = INSTACART_SFTP_PASSWORD
+    port = 22
+    remote_dir = "/inventory-files/175949-spice_town-1"    # <-- replace with the actual path Instacart expects
+
+    transport = paramiko.Transport((host, port))
+    transport.connect(username=username, password=password)
+    sftp = paramiko.SFTPClient.from_transport(transport)
+
+    # build remote path
+    remote_path = f"{remote_dir}/{Path(local_file).name}"
+
+    # upload file
+    sftp.put(local_file, remote_path)
+    print(f"✅ Uploaded {local_file} → {remote_path}")
+
+    sftp.close()
+    transport.close()
+
 if __name__ == "__main__":
     final_df = process_mapped_items(INPUT_FILE)
-    save_outputs(final_df, OUTPUT_XLSX, csv_date_override=OVERRIDE_DATE)
+    csv_file = save_outputs(final_df, OUTPUT_XLSX, csv_date_override=OVERRIDE_DATE)
+    upload_via_sftp(csv_file)
