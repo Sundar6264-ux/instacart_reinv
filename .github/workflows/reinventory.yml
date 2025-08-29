@@ -1,115 +1,70 @@
 name: Reinventory Pipeline
 
 on:
-  workflow_dispatch: {}     # run manually
+  workflow_dispatch: {}
   schedule:
-    - cron: "0 13 * * *"    # daily 13:00 UTC (~9am New York most of the year)
+    - cron: "0 13 * * *"  # 13:00 UTC ~= 9:00 America/New_York most of the year
 
 env:
-  PIP_DISABLE_PIP_VERSION_CHECK: "1"
   TZ: America/New_York
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
 
 jobs:
-  fetch_items:
+  run-all:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-      - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Fetch all Clover items
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Step 1 — Fetch all Clover inventory
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
-        run: python scripts/fetch_items.py
-      - name: Upload clover_items.xlsx
-        uses: actions/upload-artifact@v4
-        with:
-          name: clover_items
-          path: clover_items.xlsx
-          if-no-files-found: error
+        run: |
+          python getAllInvItems.py
+        # expected output: clover_items.xlsx
 
-  fetch_sales:
-    runs-on: ubuntu-latest
-    needs: fetch_items
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-      - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Download clover_items.xlsx
-        uses: actions/download-artifact@v4
-        with:
-          name: clover_items
-      - name: Fetch last 3 months sales
+      - name: Step 2 — Fetch 3 months of sales (orders)
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
-        run: python scripts/fetch_sales_last_3_months.py
-      - name: Upload product_names_last_3_months.xlsx
-        uses: actions/upload-artifact@v4
-        with:
-          name: sales_names
-          path: product_names_last_3_months.xlsx
-          if-no-files-found: error
+        run: |
+          python getOrdersForL3Mos.py
+        # expected output: product_names_last_3_months.xlsx
 
-  map_unique:
-    runs-on: ubuntu-latest
-    needs: fetch_sales
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-      - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: clover_items
-      - name: Download sales names
-        uses: actions/download-artifact@v4
-        with:
-          name: sales_names
-      - name: Map + filter to unique products
-        run: python scripts/map_unique_products.py
-      - name: Upload mapped_items.xlsx
-        uses: actions/upload-artifact@v4
-        with:
-          name: mapped
-          path: mapped_items.xlsx
-          if-no-files-found: error
+      - name: Step 3 — Map inventory to sold items (unique products)
+        run: |
+          python mapItems.py
+        # expected output: mapped_items.xlsx
 
-  build_final:
-    runs-on: ubuntu-latest
-    needs: map_unique
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-      - name: Install deps
-        run: pip install -r requirements.txt
-      - name: Download mapped items
-        uses: actions/download-artifact@v4
-        with:
-          name: mapped
-      - name: Build final XLSX + dated CSV
-        run: python scripts/build_final_csv.py
-      - name: Upload final outputs
+      - name: Step 4 — Build final XLSX + dated CSV
+        run: |
+          python final_file.py
+        # expected outputs:
+        # - processed_new_inventory_final.xlsx
+        # - <YYYYMMDD>_store_reinventory.csv
+
+      - name: Upload outputs (artifacts)
         uses: actions/upload-artifact@v4
         with:
-          name: final_outputs
+          name: reinventory_outputs
           path: |
+            clover_items.xlsx
+            product_names_last_3_months.xlsx
+            mapped_items.xlsx
             processed_new_inventory_final.xlsx
             *_store_reinventory.csv
-          if-no-files-found: error
+          if-no-files-found: warn
 

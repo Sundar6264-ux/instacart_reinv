@@ -5,11 +5,14 @@ import time
 from typing import Dict, Iterable, Optional
 import requests
 from openpyxl import Workbook
-from config import API_TOKEN, BASE_URL,MERCHANT_ID
 
 # ========= Configuration =========
-CLOVER_API_TOKEN = API_TOKEN
-CLOVER_MERCHANT_ID = MERCHANT_ID
+CLOVER_API_TOKEN = os.getenv("CLOVER_API_TOKEN")
+CLOVER_MERCHANT_ID = os.getenv("CLOVER_MERCHANT_ID")
+BASE_URL = os.getenv("BASE_URL")
+if not CLOVER_API_TOKEN or not CLOVER_MERCHANT_ID:
+    print("❌ Missing Clover API credentials in environment variables", file=sys.stderr)
+    sys.exit(1)
 
 # Tune these if needed
 DEFAULT_BATCH_SIZE = 1000  # Clover max

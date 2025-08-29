@@ -9,7 +9,12 @@ from dateutil.relativedelta import relativedelta  # pip install python-dateutil
 from openpyxl import Workbook
 
 # ----------------- Config -----------------
-from config import API_TOKEN, BASE_URL,MERCHANT_ID
+CLOVER_API_TOKEN = os.getenv("CLOVER_API_TOKEN")
+CLOVER_MERCHANT_ID = os.getenv("CLOVER_MERCHANT_ID")
+BASE_URL = os.getenv("BASE_URL")
+if not CLOVER_API_TOKEN or not CLOVER_MERCHANT_ID:
+    print("❌ Missing Clover API credentials in environment variables", file=sys.stderr)
+    sys.exit(1)
 
 REQUEST_TIMEOUT_SEC = 30
 MAX_RETRIES = 5
