@@ -2,8 +2,6 @@ name: Reinventory Pipeline
 
 on:
   workflow_dispatch: {}
-  schedule:
-    - cron: "0 13 * * *"   # 13:00 UTC ≈ 09:00 America/New_York most of the year
 
 env:
   TZ: America/New_York
