@@ -3,4 +3,4 @@ openpyxl
 XlsxWriter
 requests
 python-dateutil
-
+paramiko>=3.4

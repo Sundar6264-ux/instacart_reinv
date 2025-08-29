@@ -31,28 +31,28 @@ jobs:
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
-        run: |
-          python scripts/getAllInvItems.py
+        run: python scripts/getAllInvItems.py
 
       # Step 2: Fetch 3 months of sales -> product_names_last_3_months.xlsx
       - name: Fetch last 3 months of sales
         env:
           CLOVER_API_TOKEN: ${{ secrets.CLOVER_API_TOKEN }}
           CLOVER_MERCHANT_ID: ${{ secrets.CLOVER_MERCHANT_ID }}
-        run: |
-          python scripts/getOrdersForL3Mos.py
+        run: python scripts/getOrdersForL3Mos.py
 
       # Step 3: Map inventory to sold items -> mapped_items.xlsx
       - name: Map inventory to sold items
-        run: |
-          python scripts/mapItems.py
+        run: python scripts/mapItems.py
 
-      # Step 4: Build final XLSX + dated CSV
-      - name: Build final outputs
-        run: |
-          python scripts/final_file.py
+      # Step 4: Build final XLSX + dated CSV + SFTP upload
+      - name: Build final outputs (with SFTP)
+        env:
+          INSTACART_SFTP_HOST: ${{ secrets.INSTACART_SFTP_HOST }}   # e.g. sftp-partners.instacart.com
+          INSTACART_SFTP_USR:  ${{ secrets.INSTACART_SFTP_USR }}    # e.g. spicetownllc-catalog
+          INSTACART_SFTP_PASSWORD: ${{ secrets.INSTACART_SFTP_PASSWORD }}
+        run: python scripts/final_file.py
 
-      # Upload everything useful
+      # Upload artifacts (local copies)
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
